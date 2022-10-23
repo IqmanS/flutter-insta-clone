@@ -1,9 +1,16 @@
-// ignore_for_file: sort_child_properties_last
+// ignore_for_file: sort_child_properties_last, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:project_alpha/resources/auth_method.dart';
+import 'package:project_alpha/screens/signup_screen.dart';
 import 'package:project_alpha/utils/colors.dart';
+import 'package:project_alpha/utils/utils.dart';
 import 'package:project_alpha/widgets/text_field_input.dart';
+
+import '../responsives/mobile_screen_layout.dart';
+import '../responsives/responsive_layout_screen.dart';
+import '../responsives/web_screen_layout.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,12 +22,38 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
-
+  bool _isLoading = false;
   @override
   void dispose() {
     super.dispose();
     _emailController.dispose();
     _passController.dispose();
+  }
+
+  void loginUser() async {
+    setState(() {
+      _isLoading = true;
+    });
+    String response = await AuthMethods().loginUser(
+      email: _emailController.text,
+      password: _passController.text,
+    );
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (response != "Success") {
+      showSnackBar(response, context);
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const ResponsiveLayout(
+            mobileScreenLayout: MobileScreenLayout(),
+            webScreenLayout: WebScreenLayout(),
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -61,11 +94,18 @@ class _LoginScreenState extends State<LoginScreen> {
               //submit
               const SizedBox(height: 12),
               InkWell(
+                onTap: loginUser,
                 child: Container(
-                  child: const Text(
-                    "Log In",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  child: _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: primaryColor,
+                          ),
+                        )
+                      : const Text(
+                          "Log In",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                   width: double.infinity,
                   alignment: Alignment.center,
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -89,7 +129,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   // ignore: prefer_const_constructors
                   Text("Not a member?"),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      // Navigator.of(context).push(MaterialPageRoute(
+                      //     builder: (context) => const SignUpScreen()));
+                      Navigator.pushNamed(context, "/SignUp");
+                      setState(() {});
+                    },
                     child: Container(
                       child: const Text(
                         "Sign Up",
