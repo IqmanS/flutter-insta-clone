@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:project_alpha/providers/user_provider.dart';
 import 'package:project_alpha/responsives/mobile_screen_layout.dart';
 import 'package:project_alpha/responsives/responsive_layout_screen.dart';
 import 'package:project_alpha/responsives/web_screen_layout.dart';
@@ -9,6 +10,7 @@ import 'package:project_alpha/screens/login_screen.dart';
 import 'package:project_alpha/screens/signup_screen.dart';
 import 'package:project_alpha/utils/colors.dart';
 import 'package:project_alpha/utils/dimensions.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,43 +37,50 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Instagram Clone',
-      debugShowCheckedModeBanner: false,
-      //home: const LoginScreen(),
-      home: StreamBuilder(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.active) {
-            if (snapshot.hasData) {
-              return const ResponsiveLayout(
-                mobileScreenLayout: MobileScreenLayout(),
-                webScreenLayout: WebScreenLayout(),
-              );
-            } else if (snapshot.hasError) {
-              return Center(
-                child: Text("${snapshot.error}"),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => UserProvider(),
+        )
+      ],
+      child: MaterialApp(
+        title: 'Instagram Clone',
+        debugShowCheckedModeBanner: false,
+        //home: const LoginScreen(),
+        home: StreamBuilder(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.active) {
+              if (snapshot.hasData) {
+                return const ResponsiveLayout(
+                  mobileScreenLayout: MobileScreenLayout(),
+                  webScreenLayout: WebScreenLayout(),
+                );
+              } else if (snapshot.hasError) {
+                return Center(
+                  child: Text("${snapshot.error}"),
+                );
+              }
+            } else if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(
+                  child: CircularProgressIndicator(
+                    color: primaryColor,
+                  ),
+                ),
               );
             }
-          } else if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(
-                  color: primaryColor,
-                ),
-              ),
-            );
-          }
-          return const LoginScreen();
+            return const LoginScreen();
+          },
+        ),
+        theme: ThemeData.dark().copyWith(
+          scaffoldBackgroundColor: mobileBackgroundColor,
+        ),
+        routes: {
+          "/SignUp": (context) => const SignUpScreen(),
+          "/Login": (context) => const LoginScreen(),
         },
       ),
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: mobileBackgroundColor,
-      ),
-      routes: {
-        "/SignUp": (context) => const SignUpScreen(),
-        "/Login": (context) => const LoginScreen(),
-      },
     );
   }
 }
